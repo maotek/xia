@@ -72,14 +72,24 @@ const joinNameKey = "mao-quiz-name";
 const playerIdKey = "mao-quiz-player-id";
 
 function wsUrl(role: Role) {
-  const apiBase =
-    process.env.NEXT_PUBLIC_API_URL ||
-    (typeof window === "undefined" ? "http://localhost" : window.location.origin);
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || defaultApiBase();
   const url = new URL(apiBase);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/ws";
   url.search = `?role=${role}`;
   return url.toString();
+}
+
+function defaultApiBase() {
+  if (typeof window === "undefined") {
+    return "http://localhost";
+  }
+  if (process.env.NODE_ENV === "development") {
+    const url = new URL(window.location.origin);
+    url.port = "8000";
+    return url.origin;
+  }
+  return window.location.origin;
 }
 
 function useQuizSocket(role: Role) {
@@ -159,6 +169,7 @@ function useQuizSocket(role: Role) {
 function ConnectionPill({ status }: { status: ConnectionStatus }) {
   return (
     <span className={`connection-pill connection-${status}`}>
+      <span className="connection-dot" />
       {status === "connected" ? "Live" : status === "connecting" ? "Verbinden" : "Offline"}
     </span>
   );
@@ -181,12 +192,18 @@ function Shell({
       <header className="topbar">
         <Link className="brand" href="/">
           <span className="brand-mark">M</span>
-          <span>Xiaxia 23rd BDay Quiz</span>
+          <span className="brand-copy">
+            <strong>Xiaxia</strong>
+            <small>23rd BDay Quiz</small>
+          </span>
         </Link>
         <nav className="topnav">
-          <Link href="/">Spelers</Link>
+          <Link className="nav-link" href="/">
+            Spelers
+          </Link>
           <span className="pod-pill" title="Frontend pod">
-            {frontendPod}
+            <span>Pod</span>
+            <b>{frontendPod}</b>
           </span>
           <ConnectionPill status={status} />
         </nav>
@@ -352,6 +369,10 @@ function JoinScreen({
           </p>
         </div>
         <form className="join-card" onSubmit={submit}>
+          <div className="join-card-heading">
+            <span>Join the game</span>
+            <h2>Klaar om te spelen?</h2>
+          </div>
           <label htmlFor="player-name">Naam</label>
           <input
             id="player-name"
@@ -361,7 +382,8 @@ function JoinScreen({
             value={name}
           />
           <button className="primary-button" disabled={status !== "connected"} type="submit">
-            Meedoen
+            <span>Meedoen</span>
+            <span aria-hidden="true">&rarr;</span>
           </button>
         </form>
       </section>
