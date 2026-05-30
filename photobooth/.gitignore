@@ -1,0 +1,9 @@
+backend/output/*.jpg
+backend/output/*.jpeg
+backend/output/*.png
+!backend/output/bg.png
+backend/.venv/
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+.DS_Store
