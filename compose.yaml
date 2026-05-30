@@ -1,0 +1,27 @@
+services:
+  backend:
+    image: ghcr.io/maotek/kahoot-backend:latest
+    pull_policy: always
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  frontend:
+    image: ghcr.io/maotek/kahoot-frontend:latest
+    pull_policy: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:3000"
