@@ -8,6 +8,10 @@ type Phase = "lobby" | "question" | "reveal" | "final";
 type Role = "player" | "admin";
 type ConnectionStatus = "connecting" | "connected" | "offline";
 
+type AppProps = {
+  frontendPod: string;
+};
+
 type Question = {
   id: string;
   kind: "quiz" | "slide";
@@ -163,10 +167,12 @@ function ConnectionPill({ status }: { status: ConnectionStatus }) {
 function Shell({
   children,
   status,
+  frontendPod,
   compact = false,
 }: {
   children: React.ReactNode;
   status: ConnectionStatus;
+  frontendPod: string;
   compact?: boolean;
 }) {
   return (
@@ -179,6 +185,9 @@ function Shell({
         </Link>
         <nav className="topnav">
           <Link href="/">Spelers</Link>
+          <span className="pod-pill" title="Frontend pod">
+            {frontendPod}
+          </span>
           <ConnectionPill status={status} />
         </nav>
       </header>
@@ -316,9 +325,11 @@ function TimerPill({ snapshot }: { snapshot: Snapshot }) {
 function JoinScreen({
   status,
   onJoin,
+  frontendPod,
 }: {
   status: ConnectionStatus;
   onJoin: (name: string) => void;
+  frontendPod: string;
 }) {
   const [name, setName] = useState("");
 
@@ -331,7 +342,7 @@ function JoinScreen({
   }
 
   return (
-    <Shell status={status}>
+    <Shell frontendPod={frontendPod} status={status}>
       <section className="join-layout">
         <div className="join-copy">
           <p className="eyebrow">Live party quiz</p>
@@ -515,7 +526,7 @@ function FinalView({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-export function PlayerApp() {
+export function PlayerApp({ frontendPod }: AppProps) {
   const { snapshot, status, send } = useQuizSocket("player");
   const joined = Boolean(snapshot?.you.player_id);
 
@@ -533,11 +544,11 @@ export function PlayerApp() {
   }
 
   if (!joined) {
-    return <JoinScreen onJoin={join} status={status} />;
+    return <JoinScreen frontendPod={frontendPod} onJoin={join} status={status} />;
   }
 
   return (
-    <Shell status={status}>
+    <Shell frontendPod={frontendPod} status={status}>
       {!snapshot ? null : snapshot.phase === "lobby" ? (
         <Lobby snapshot={snapshot} />
       ) : snapshot.phase === "question" ? (
@@ -685,11 +696,11 @@ function QuestionRail({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-export function AdminApp() {
+export function AdminApp({ frontendPod }: AppProps) {
   const { snapshot, status, send } = useQuizSocket("admin");
 
   return (
-    <Shell compact status={status}>
+    <Shell compact frontendPod={frontendPod} status={status}>
       <section className="admin-layout">
         <div className="admin-main">
           <div className="admin-hero">

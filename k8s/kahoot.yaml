@@ -83,6 +83,11 @@ spec:
         - name: frontend
           image: ghcr.io/maotek/kahoot-frontend:latest
           imagePullPolicy: Always
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           ports:
             - containerPort: 3000
               name: http

@@ -143,6 +143,18 @@ a {
   background: #d5cab7;
 }
 
+.pod-pill {
+  max-width: 240px;
+  overflow: hidden;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 243, 216, 0.12);
+  font-family: monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .connection-connected {
   background: #b5c7a9;
 }
