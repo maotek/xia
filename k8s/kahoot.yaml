@@ -3,6 +3,23 @@ kind: Namespace
 metadata:
   name: kahoot
 ---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-prod
+  namespace: kahoot
+spec:
+  acme:
+    # Optionally add an email address for the Let's Encrypt account:
+    # email: you@example.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -120,16 +137,17 @@ metadata:
   name: kahoot
   namespace: kahoot
   annotations:
+    cert-manager.io/issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
-  # Create this secret from an existing certificate and matching private key:
-  # kubectl -n kahoot create secret tls kahoot-tls \
-  #   --cert=/path/to/tls.crt --key=/path/to/tls.key
   tls:
-    - secretName: kahoot-tls
+    - hosts:
+        - xiaxia23bday.maotek.nl
+      secretName: kahoot-tls
   rules:
-    - http:
+    - host: xiaxia23bday.maotek.nl
+      http:
         paths:
           - path: /ws
             pathType: Prefix
