@@ -1,21 +1,43 @@
 # Kubernetes Deployment
 
-The Traefik ingress in `kahoot.yaml` serves
-`https://xiaxia23bday.maotek.nl`. cert-manager requests and renews the trusted
-TLS certificate through Let's Encrypt.
+The application is available at `https://xiaxia23bday.maotek.nl`.
+Traefik serves the ingress and cert-manager automatically obtains and renews
+the TLS certificate through Let's Encrypt.
 
-## Prerequisites
+## Requirements
 
-- Point the DNS record for `xiaxia23bday.maotek.nl` to the public IP address
-  that exposes Traefik.
-- Allow inbound internet traffic on ports `80` and `443`. Let's Encrypt uses
-  port `80` for the HTTP-01 ownership check.
-- Run the commands below from the repository root on a machine with access to
-  the Kubernetes cluster.
+- `kubectl` must be configured for the Kubernetes cluster.
+- Traefik must be installed with an ingress class named `traefik`.
+- `xiaxia23bday.maotek.nl` must point to the public Traefik IP address.
+- Ports `80` and `443` must be reachable from the internet. Let's Encrypt uses
+  port `80` for HTTP-01 validation.
 
-## Install cert-manager
+## Deploy
 
-Install cert-manager once per cluster:
+From the repository root, run:
+
+```bash
+./k8s/deploy.sh
+```
+
+The script installs cert-manager, waits until it is ready, and applies
+`k8s/kahoot.yaml`.
+
+## Roll out a new build
+
+After publishing new backend or frontend images to GHCR, run:
+
+```bash
+./k8s/rollout.sh
+```
+
+The script reapplies `k8s/kahoot.yaml`, restarts both deployments so they pull
+the latest images, and waits for the rollouts to finish.
+
+## Install cert-manager manually
+
+cert-manager only needs to be installed once per cluster. To install it
+without the deployment script, run:
 
 ```bash
 kubectl apply -f \
@@ -26,52 +48,42 @@ kubectl -n cert-manager rollout status deployment/cert-manager-webhook
 kubectl -n cert-manager rollout status deployment/cert-manager-cainjector
 ```
 
-## Deploy
-
-Apply the application manifest:
+Then deploy the application:
 
 ```bash
 kubectl apply -f k8s/kahoot.yaml
 ```
 
-The manifest creates a namespace-scoped `letsencrypt-prod` issuer. cert-manager
-uses it to request the certificate and stores the result in the `kahoot-tls`
-secret automatically.
+## TLS certificate
 
-## Verify HTTPS
+The `letsencrypt-prod` issuer in `k8s/kahoot.yaml` manages the production
+certificate. cert-manager generates the private key and stores the certificate
+in the `kahoot-tls` secret used by the ingress.
+
+Do not create or edit `kahoot-tls` manually.
+
+## Verify
 
 Certificate issuance can take a few minutes:
 
 ```bash
-kubectl -n kahoot get issuer,certificate,certificaterequest,order,challenge
-kubectl -n kahoot get secret kahoot-tls
+kubectl -n kahoot get issuer,certificate,secret
 curl -I https://xiaxia23bday.maotek.nl
 ```
 
-The `Certificate` should report `READY=True`. If issuance fails, inspect the
-resources:
+The `letsencrypt-prod` issuer and `kahoot-tls` certificate should report
+`READY=True`.
+
+## Troubleshooting
+
+If the certificate is not ready, inspect the Let's Encrypt HTTP-01 validation:
 
 ```bash
 kubectl -n kahoot describe issuer letsencrypt-prod
-kubectl -n kahoot describe certificate
+kubectl -n kahoot describe certificate kahoot-tls
+kubectl -n kahoot get order,challenge
 kubectl -n kahoot describe challenge
 ```
 
-## Local self-signed certificate
-
-For a development environment without a public DNS record, remove the
-`cert-manager.io/issuer` ingress annotation first so cert-manager does not
-replace the manual secret. Then generate a self-signed certificate:
-
-```bash
-openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
-  -keyout tls.key -out tls.crt \
-  -subj "/CN=xiaxia23bday.maotek.nl" \
-  -addext "subjectAltName=DNS:xiaxia23bday.maotek.nl"
-
-kubectl -n kahoot create secret tls kahoot-tls \
-  --cert=./tls.crt --key=./tls.key
-```
-
-A browser will warn about a self-signed certificate unless you trust it
-locally. Do not commit `tls.crt` or `tls.key`.
+Confirm that DNS points to the public Traefik IP address and that port `80` is
+reachable from the internet.

@@ -21,132 +21,168 @@ QUESTIONS: list[dict[str, Any]] = [
         "kind": "quiz",
         "prompt": "Wat is mijn sterrenbeeld?",
         "choices": ["Leo", "Cancer", "Gemini", "Scorpio"],
-        "correct_index": 1,
+        "correct_indices": [1],
     },
     {
         "id": "geboorteplaats",
         "kind": "quiz",
         "prompt": "Waar ben ik geboren?",
         "choices": ["Amsterdam", "Tilburg", "Eindhoven", "Rotterdam"],
-        "correct_index": 2,
+        "correct_indices": [2],
     },
     {
         "id": "eerste-telefoon",
         "kind": "quiz",
         "prompt": "Wat was mijn eerste telefoon?",
         "choices": ["iPhone 4", "Nokia 3310", "Sony Ericsson Walkman", "Samsung Galaxy Core"],
-        "correct_index": 3,
+        "correct_indices": [3],
     },
     {
         "id": "vroeger-worden",
         "kind": "quiz",
         "prompt": "Wat wilde ik vroeger worden?",
         "choices": ["Piloot", "Dierenarts", "Kapster", "Juf"],
-        "correct_index": 1,
+        "correct_indices": [1],
     },
     {
         "id": "obsessie-artiest",
         "kind": "quiz",
         "prompt": "Welke artiest was mijn grootste obsessie?",
         "choices": ["Justin Bieber", "Ariana Grande", "One Direction", "Taylor Swift"],
-        "correct_index": 2,
+        "correct_indices": [2],
     },
     {
-        "id": "babyfoto",
-        "kind": "slide",
-        "prompt": "Babyfoto laten zien",
-        "media": "baby-photo",
-        "answer": "Babyfoto reveal",
-    },
-    {
-        "id": "duizend-euro",
+        "id": "lengte",
         "kind": "quiz",
-        "prompt": "Wat zou ik absoluut doen voor EUR 1000?",
-        "choices": ["Een marathon lopen", "Een slang vasthouden", "Een maand zonder telefoon", "Haar roze verven"],
-        "correct_index": 3,
+        "prompt": "Hoe lang ben ik?",
+        "choices": ["Korter dan 155 cm", "155 - 160 cm", "160 - 165 cm", "Langer dan 165 cm"],
+        "correct_indices": [3],
     },
     {
         "id": "hondenknuffel",
         "kind": "quiz",
         "prompt": "Wat was de naam die ik gaf aan mijn eerste hondenknuffel?",
         "choices": ["Bobby", "Rakker", "Max", "Pluis"],
-        "correct_index": 1,
+        "correct_indices": [1],
     },
     {
         "id": "sport",
         "kind": "quiz",
         "prompt": "Welke sport heb ik gedaan?",
         "choices": ["Hockey", "Turnen", "Paardrijden", "Tennis"],
-        "correct_index": 2,
+        "correct_indices": [2],
     },
     {
         "id": "telefoon-wc",
         "kind": "quiz",
-        "prompt": "Waar heb ik ooit mijn telefoon laten vallen?",
+        "prompt": "Ik heb ooit mijn telefoon laten vallen. Waar?",
         "choices": ["In de sloot", "Op school", "In de trein", "In de wc"],
-        "correct_index": 3,
+        "correct_indices": [3],
     },
     {
         "id": "thuiskomen",
         "kind": "quiz",
         "prompt": "Wat doe ik als eerste als ik thuis kom?",
         "choices": ["Eten maken", "Dutje doen", "Make-up afhalen", "TikTok openen"],
-        "correct_index": 1,
+        "correct_indices": [1],
+    },
+    {
+        "id": "duizend-euro",
+        "kind": "quiz",
+        "prompt": "Wat zou ik absoluut doen voor EUR 1000?",
+        "choices": ["Een marathon lopen", "Een slang vasthouden", "Een maand zonder telefoon", "Mijn haar roze verven"],
+        "correct_indices": [3],
     },
     {
         "id": "goud-zilver",
         "kind": "quiz",
         "prompt": "Draag ik meer goud of zilver?",
         "choices": ["Zilver", "Allebei evenveel", "Goud", "Geen sieraden"],
-        "correct_index": 2,
+        "correct_indices": [2],
     },
     {
         "id": "koffie-thee",
         "kind": "quiz",
         "prompt": "Koffie of thee?",
         "choices": ["Koffie", "Allebei", "Geen van beide", "Thee"],
-        "correct_index": 3,
+        "correct_indices": [3],
     },
     {
         "id": "lucky-number",
         "kind": "quiz",
         "prompt": "Wat is mijn lucky number?",
         "choices": ["7", "18", "11", "21"],
-        "correct_index": 1,
+        "correct_indices": [1],
     },
     {
         "id": "gebroken-botten",
         "kind": "quiz",
         "prompt": "Hoeveel botten heb ik gebroken?",
         "choices": ["1", "2", "0", "3"],
-        "correct_index": 2,
+        "correct_indices": [2],
     },
     {
         "id": "allergie",
         "kind": "quiz",
         "prompt": "Waar ben ik allergisch voor?",
         "choices": ["Pinda's", "Katten", "Gluten", "Niets"],
-        "correct_index": 3,
+        "correct_indices": [3],
+    },
+    {
+        "id": "middelbare-instrument",
+        "kind": "quiz",
+        "prompt": "Welk instrument speelde ik tijdens mijn favoriete moment op de middelbare school?",
+        "choices": ["Piano", "Gitaar", "Drum", "Trompet"],
+        "correct_indices": [2],
+    },
+    {
+        "id": "kaas",
+        "kind": "quiz",
+        "prompt": "Wat moet er altijd bij het eten?",
+        "choices": ["Pindasaus", "Kaas", "Ketchup", "Sambal"],
+        "correct_indices": [1],
+    },
+    {
+        "id": "niet-lusten",
+        "kind": "quiz",
+        "prompt": "Wat lust ik niet?",
+        "choices": ["Tofu", "Champignons", "Tomaten", "Olijven"],
+        "correct_indices": [0, 1, 2],
+    },
+    {
+        "id": "slechtste-vak",
+        "kind": "quiz",
+        "prompt": "In welk vak was ik het slechtst op de middelbare school?",
+        "choices": ["Wiskunde", "Nederlands", "Economie", "Geschiedenis"],
+        "correct_indices": [2],
+    },
+    {
+        "id": "angst",
+        "kind": "quiz",
+        "prompt": "Waar ben ik het meest bang voor?",
+        "choices": ["Spinnen", "Het donker", "Hoogtes", "Clowns"],
+        "correct_indices": [1],
+    },
+    {
+        "id": "love-language",
+        "kind": "quiz",
+        "prompt": "Wat is mijn love language?",
+        "choices": ["Quality time", "Words of affirmation", "Acts of service", "Receiving gifts"],
+        "correct_indices": [2],
+    },
+    {
+        "id": "reizen",
+        "kind": "quiz",
+        "prompt": "Waar zou ik nog echt een keer naartoe willen reizen?",
+        "choices": ["Japan", "Korea", "Amerika", "Thailand", "Spanje", "Australie"],
+        "correct_indices": [0, 1, 2, 3],
     },
     {
         "id": "favoriete-persoon",
         "kind": "quiz",
-        "prompt": "Mijn meest favoriete persoon op aarde?",
+        "prompt": "Wie is mijn favoriete persoon op aarde?",
         "choices": ["Harry Styles", "Mao", "Mijn buurvrouw", "Mezelf"],
-        "correct_index": 1,
-    },
-    {
-        "id": "tattoo",
-        "kind": "slide",
-        "prompt": "Ik heb een tattoo laten zetten. Waar?",
-        "answer": "Tattoo reveal",
-    },
-    {
-        "id": "kerstconcert",
-        "kind": "quiz",
-        "prompt": "Op welk instrument speelde ik tijdens het kerstconcert op de middelbare?",
-        "choices": ["Piano", "Gitaar", "Drum", "Trompet"],
-        "correct_index": 2,
+        "correct_indices": [1],
     },
 ]
 
@@ -164,7 +200,7 @@ class Player:
 
 @dataclass
 class Answer:
-    option_index: int
+    option_indices: tuple[int, ...]
     correct: bool
     points: int
     elapsed: float
@@ -209,8 +245,11 @@ class GameState:
 
         self.phase = "question"
         self.current_index = index
-        self.question_started_at = time.monotonic()
-        self.question_deadline_at = time.time() + QUESTION_DURATION_SECONDS
+        question = QUESTIONS[index]
+        self.question_started_at = time.monotonic() if question["kind"] == "quiz" else None
+        self.question_deadline_at = (
+            time.time() + QUESTION_DURATION_SECONDS if question["kind"] == "quiz" else None
+        )
         self.answers = {}
         for player in self.players.values():
             player.last_delta = 0
@@ -249,13 +288,10 @@ def public_question(question: dict[str, Any], role: Role, phase: Phase) -> dict[
         "kind": question["kind"],
         "prompt": question["prompt"],
         "choices": question.get("choices", []),
-        "media": question.get("media"),
-        "answer": question.get("answer"),
+        "allows_multiple": len(question["correct_indices"]) > 1,
     }
     if role == "admin" or phase in {"reveal", "final"}:
-        payload["correct_index"] = question.get("correct_index")
-        if question.get("correct_index") is not None:
-            payload["answer"] = question["choices"][question["correct_index"]]
+        payload["correct_indices"] = question["correct_indices"]
     return payload
 
 
@@ -284,6 +320,9 @@ def connected_player_ids() -> list[str]:
 
 
 def all_connected_players_answered() -> bool:
+    question = state.current_question
+    if not question or question["kind"] != "quiz":
+        return False
     player_ids = connected_player_ids()
     if not player_ids:
         return False
@@ -296,8 +335,9 @@ def answer_counts() -> list[int]:
         return []
     counts = [0 for _ in question["choices"]]
     for answer in state.answers.values():
-        if 0 <= answer.option_index < len(counts):
-            counts[answer.option_index] += 1
+        for option_index in answer.option_indices:
+            if 0 <= option_index < len(counts):
+                counts[option_index] += 1
     return counts
 
 
@@ -341,7 +381,7 @@ def snapshot(role: Role, player_id: str | None = None) -> dict[str, Any]:
         "you": {
             "player_id": player_id,
             "answered": own_answer is not None,
-            "answer_index": own_answer.option_index if own_answer else None,
+            "answer_indices": list(own_answer.option_indices) if own_answer else [],
             "correct": own_answer.correct if state.phase == "reveal" and own_answer else None,
             "points": own_answer.points if state.phase == "reveal" and own_answer else None,
         },
@@ -373,7 +413,12 @@ def cancel_timer_unlocked() -> None:
 def schedule_timer_unlocked() -> None:
     global timer_task
     cancel_timer_unlocked()
-    if state.phase == "question" and state.current_index is not None:
+    if (
+        state.phase == "question"
+        and state.current_index is not None
+        and state.current_question
+        and state.current_question["kind"] == "quiz"
+    ):
         timer_task = asyncio.create_task(
             auto_reveal_after_timeout(state.current_index, state.question_started_at)
         )
@@ -394,13 +439,13 @@ async def auto_reveal_after_timeout(index: int, started_at: float | None) -> Non
         return
 
 
-def score_answer(option_index: int) -> tuple[bool, int, float]:
+def score_answer(option_indices: tuple[int, ...]) -> tuple[bool, int, float]:
     question = state.current_question
     if not question or question["kind"] != "quiz" or state.question_started_at is None:
         return False, 0, 0
 
     elapsed = max(0.0, time.monotonic() - state.question_started_at)
-    correct = option_index == question["correct_index"]
+    correct = set(option_indices) == set(question["correct_indices"])
     if not correct:
         return False, 0, elapsed
 
@@ -437,21 +482,27 @@ async def handle_answer(connection: Connection, message: dict[str, Any]) -> None
     if not question or question["kind"] != "quiz":
         return
 
-    try:
-        option_index = int(message.get("option_index"))
-    except (TypeError, ValueError):
+    option_indices = message.get("option_indices")
+    if not isinstance(option_indices, list) or not option_indices:
         return
-    if option_index < 0 or option_index >= len(question["choices"]):
+    if not all(isinstance(index, int) and not isinstance(index, bool) for index in option_indices):
+        return
+    selected_indices = tuple(sorted(set(option_indices)))
+    if len(selected_indices) != len(option_indices):
+        return
+    if any(index < 0 or index >= len(question["choices"]) for index in selected_indices):
+        return
+    if len(question["correct_indices"]) == 1 and len(selected_indices) != 1:
         return
 
-    correct, points, elapsed = score_answer(option_index)
+    correct, points, elapsed = score_answer(selected_indices)
     player = state.players[connection.player_id]
     player.last_delta = points
     player.last_correct = correct
     player.streak = player.streak + 1 if correct else 0
     player.score += points
     state.answers[connection.player_id] = Answer(
-        option_index=option_index,
+        option_indices=selected_indices,
         correct=correct,
         points=points,
         elapsed=elapsed,

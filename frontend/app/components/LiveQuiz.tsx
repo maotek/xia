@@ -14,12 +14,11 @@ type AppProps = {
 
 type Question = {
   id: string;
-  kind: "quiz" | "slide";
+  kind: "quiz";
   prompt: string;
   choices: string[];
-  media?: "baby-photo";
-  answer?: string;
-  correct_index?: number;
+  allows_multiple: boolean;
+  correct_indices?: number[];
 };
 
 type Player = {
@@ -61,13 +60,14 @@ type Snapshot = {
   you: {
     player_id: string | null;
     answered: boolean;
-    answer_index: number | null;
+    answer_indices: number[];
     correct: boolean | null;
     points: number | null;
   };
 };
 
 const optionClasses = ["option-red", "option-blue", "option-gold", "option-green"];
+const optionLabels = ["A", "B", "C", "D", "E", "F"];
 const joinNameKey = "mao-quiz-name";
 const playerIdKey = "mao-quiz-player-id";
 
@@ -258,35 +258,6 @@ function Leaderboard({
   );
 }
 
-function BabyPhotoFrame() {
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div className="photo-frame">
-      {!failed ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src="/babyfoto.jpg" alt="Babyfoto" onError={() => setFailed(true)} />
-      ) : (
-        <div className="photo-fallback">
-          <span>Babyfoto</span>
-          <strong>Reveal</strong>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function QuestionMedia({ question }: { question: Question }) {
-  if (question.media === "baby-photo") {
-    return <BabyPhotoFrame />;
-  }
-  return (
-    <div className="reveal-orb">
-      <span>?</span>
-    </div>
-  );
-}
-
 function QuestionHeader({ snapshot }: { snapshot: Snapshot }) {
   const questionNumber =
     snapshot.current_index === null ? 0 : Math.min(snapshot.current_index + 1, snapshot.total_questions);
@@ -299,7 +270,7 @@ function QuestionHeader({ snapshot }: { snapshot: Snapshot }) {
       <span>
         {snapshot.answered_count} / {snapshot.player_count} antwoorden
       </span>
-      {snapshot.phase === "question" ? <TimerPill snapshot={snapshot} /> : null}
+      {snapshot.phase === "question" && snapshot.timer_ends_at ? <TimerPill snapshot={snapshot} /> : null}
     </div>
   );
 }
@@ -415,12 +386,72 @@ function Lobby({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
+function QuizOptions({
+  answered,
+  question,
+  submittedIndices,
+  onAnswer,
+}: {
+  answered: boolean;
+  question: Question;
+  submittedIndices: number[];
+  onAnswer: (optionIndices: number[]) => void;
+}) {
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+  const visibleSelection = answered ? submittedIndices : selectedIndices;
+
+  function selectOption(index: number) {
+    if (!question.allows_multiple) {
+      onAnswer([index]);
+      return;
+    }
+    setSelectedIndices((current) =>
+      current.includes(index) ? current.filter((item) => item !== index) : [...current, index],
+    );
+  }
+
+  return (
+    <>
+      {question.allows_multiple ? <p className="multi-answer-hint">Kies alle juiste antwoorden.</p> : null}
+      <div className="option-grid">
+        {question.choices.map((choice, index) => {
+          const selected = visibleSelection.includes(index);
+          return (
+            <button
+              className={`answer-option ${optionClasses[index % optionClasses.length]} ${
+                selected ? "selected" : ""
+              }`}
+              disabled={answered}
+              key={choice}
+              onClick={() => selectOption(index)}
+              type="button"
+            >
+              <span className="option-symbol">{optionLabels[index]}</span>
+              <span>{choice}</span>
+            </button>
+          );
+        })}
+      </div>
+      {question.allows_multiple && !answered ? (
+        <button
+          className="answer-submit"
+          disabled={selectedIndices.length === 0}
+          onClick={() => onAnswer(selectedIndices)}
+          type="button"
+        >
+          Antwoorden bevestigen
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 function PlayerQuestion({
   snapshot,
   onAnswer,
 }: {
   snapshot: Snapshot;
-  onAnswer: (optionIndex: number) => void;
+  onAnswer: (optionIndices: number[]) => void;
 }) {
   const question = snapshot.current_question;
   if (!question) {
@@ -434,31 +465,13 @@ function PlayerQuestion({
       <div className="question-card">
         <QuestionHeader snapshot={snapshot} />
         <h1>{question.prompt}</h1>
-        {question.kind === "slide" ? (
-          <div className="slide-stage">
-            <QuestionMedia question={question} />
-          </div>
-        ) : (
-          <div className="option-grid">
-            {question.choices.map((choice, index) => {
-              const selected = snapshot.you.answer_index === index;
-              return (
-                <button
-                  className={`answer-option ${optionClasses[index % optionClasses.length]} ${
-                    selected ? "selected" : ""
-                  }`}
-                  disabled={answered}
-                  key={choice}
-                  onClick={() => onAnswer(index)}
-                  type="button"
-                >
-                  <span className="option-symbol">{["A", "B", "C", "D"][index]}</span>
-                  <span>{choice}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <QuizOptions
+          answered={answered}
+          key={question.id}
+          onAnswer={onAnswer}
+          question={question}
+          submittedIndices={snapshot.you.answer_indices}
+        />
         {answered ? <p className="answer-lock">Antwoord staat vast.</p> : null}
       </div>
       <Leaderboard entries={snapshot.leaderboard} />
@@ -472,8 +485,7 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
     return <Lobby snapshot={snapshot} />;
   }
 
-  const isQuiz = question.kind === "quiz";
-  const correctIndex = question.correct_index ?? -1;
+  const correctIndices = question.correct_indices ?? [];
   const totalAnswers = snapshot.answer_counts.reduce((sum, count) => sum + count, 0);
 
   return (
@@ -481,45 +493,37 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
       <div className="question-card reveal-card">
         <QuestionHeader snapshot={snapshot} />
         <h1>{question.prompt}</h1>
-        {isQuiz ? (
-          <>
-            <div className="answer-reveal">
-              <span>Correct antwoord</span>
-              <strong>{question.choices[correctIndex]}</strong>
-            </div>
-            <div className="result-strip">
-              {snapshot.you.correct === true ? (
-                <strong>Goed: +{snapshot.you.points ?? 0}</strong>
-              ) : snapshot.you.correct === false ? (
-                <strong>Net mis</strong>
-              ) : (
-                <strong>Geen antwoord</strong>
-              )}
-            </div>
-            <div className="bars">
-              {question.choices.map((choice, index) => {
-                const count = snapshot.answer_counts[index] || 0;
-                const width = totalAnswers === 0 ? 0 : Math.round((count / totalAnswers) * 100);
-                return (
-                  <div className="bar-row" key={choice}>
-                    <span>{choice}</span>
-                    <div className="bar-track">
-                      <div
-                        className={`bar-fill ${index === correctIndex ? "bar-correct" : ""}`}
-                        style={{ width: `${width}%` }}
-                      />
-                    </div>
-                    <strong>{count}</strong>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="slide-stage">
-            <QuestionMedia question={question} />
-          </div>
-        )}
+        <div className="answer-reveal">
+          <span>Correct antwoord</span>
+          <strong>{correctIndices.map((index) => question.choices[index]).join(", ")}</strong>
+        </div>
+        <div className="result-strip">
+          {snapshot.you.correct === true ? (
+            <strong>Goed: +{snapshot.you.points ?? 0}</strong>
+          ) : snapshot.you.correct === false ? (
+            <strong>Net mis</strong>
+          ) : (
+            <strong>Geen antwoord</strong>
+          )}
+        </div>
+        <div className="bars">
+          {question.choices.map((choice, index) => {
+            const count = snapshot.answer_counts[index] || 0;
+            const width = totalAnswers === 0 ? 0 : Math.round((count / totalAnswers) * 100);
+            return (
+              <div className="bar-row" key={choice}>
+                <span>{choice}</span>
+                <div className="bar-track">
+                  <div
+                    className={`bar-fill ${correctIndices.includes(index) ? "bar-correct" : ""}`}
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+                <strong>{count}</strong>
+              </div>
+            );
+          })}
+        </div>
       </div>
       <Leaderboard entries={snapshot.leaderboard} title="Tussenstand" />
     </section>
@@ -561,8 +565,8 @@ export function PlayerApp({ frontendPod }: AppProps) {
     });
   }
 
-  function answer(optionIndex: number) {
-    send({ type: "answer", option_index: optionIndex });
+  function answer(optionIndices: number[]) {
+    send({ type: "answer", option_indices: optionIndices });
   }
 
   if (!joined) {
@@ -651,23 +655,17 @@ function AdminQuestionCard({ snapshot }: { snapshot: Snapshot }) {
     <section className="admin-card admin-question-card">
       <QuestionHeader snapshot={snapshot} />
       <h2>{question.prompt}</h2>
-      {question.kind === "quiz" ? (
-        <div className="admin-options">
-          {question.choices.map((choice, index) => (
-            <div
-              className={`admin-option ${question.correct_index === index ? "admin-option-correct" : ""}`}
-              key={choice}
-            >
-              <span>{["A", "B", "C", "D"][index]}</span>
-              <strong>{choice}</strong>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="admin-slide-note">
-          <QuestionMedia question={question} />
-        </div>
-      )}
+      <div className="admin-options">
+        {question.choices.map((choice, index) => (
+          <div
+            className={`admin-option ${question.correct_indices?.includes(index) ? "admin-option-correct" : ""}`}
+            key={choice}
+          >
+            <span>{optionLabels[index]}</span>
+            <strong>{choice}</strong>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
