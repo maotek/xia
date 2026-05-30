@@ -68,7 +68,9 @@ const joinNameKey = "mao-quiz-name";
 const playerIdKey = "mao-quiz-player-id";
 
 function wsUrl(role: Role) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBase =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (typeof window === "undefined" ? "http://localhost" : window.location.origin);
   const url = new URL(apiBase);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/ws";
