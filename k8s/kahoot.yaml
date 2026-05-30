@@ -119,8 +119,15 @@ kind: Ingress
 metadata:
   name: kahoot
   namespace: kahoot
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
+  # Create this secret from an existing certificate and matching private key:
+  # kubectl -n kahoot create secret tls kahoot-tls \
+  #   --cert=/path/to/tls.crt --key=/path/to/tls.key
+  tls:
+    - secretName: kahoot-tls
   rules:
     - http:
         paths:
