@@ -62,6 +62,8 @@ PHOTOBOOTH_ARTIFICIAL_MARGIN_MM=4
 PHOTOBOOTH_LPR_OPTIONS="-o PageSize=Postcard.Fullbleed -o MediaType=photographic -o ColorModel=RGB -o cupsPrintQuality=Normal"
 ```
 
+If the configured options are rejected by your driver, the backend now retries once with a minimal command (`lpr -P <printer> <file>`).
+
 If `PHOTOBOOTH_PRINTER_NAME` is unset or `PHOTOBOOTH_DRY_RUN=1`, the app renders the postcard sheet but does not print.
 
 CUPS media names are printer-driver specific. Check the CP1200 queue with:
@@ -69,6 +71,16 @@ CUPS media names are printer-driver specific. Check the CP1200 queue with:
 ```bash
 lpoptions -p Canon_SELPHY_CP1200 -l
 ```
+
+On Ubuntu, `lpstat -e` only confirms the queue is visible, not that all options are valid for image printing. If jobs fail on Ubuntu but work on macOS, verify:
+
+```bash
+which lpr
+lpoptions -p Canon_SELPHY_CP1200 -l
+PHOTOBOOTH_LPR_OPTIONS="" PHOTOBOOTH_PRINTER_NAME="Canon_SELPHY_CP1200" PHOTOBOOTH_DRY_RUN=0 uvicorn app.main:app --reload --port 8001
+```
+
+If the empty `PHOTOBOOTH_LPR_OPTIONS` run works, set Linux-specific options from `lpoptions -l` output.
 
 Your CP1200 driver lists `Postcard` and `Postcard.Fullbleed`. The app defaults to `Postcard.Fullbleed` and adds a 4 mm white border inside the generated JPEG. This lets the printer use borderless mode while cropping the artificial white edge instead of the real artwork. Increase `PHOTOBOOTH_ARTIFICIAL_MARGIN_MM` if the edges are still cut off; decrease it if the visible white border is too large.
 

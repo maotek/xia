@@ -199,8 +199,6 @@ def compose_sheet(images: list[Image.Image]) -> Image.Image:
     content_height = (photo_height * 3) + (row_gap * 2)
     content_top = margin_top + max(0, (available_height - content_height) // 2) - 75
 
-    draw_cut_guide(draw, margin_x + strip_width + (gutter // 2), content_top, content_top + content_height)
-
     for column in range(2):
         strip_x = margin_x + column * (strip_width + gutter)
         outward_offset = 20
@@ -253,15 +251,6 @@ def cover_crop(image: Image.Image, target_size: tuple[int, int]) -> Image.Image:
     return resized.crop((left, top, left + target_width, top + target_height))
 
 
-def draw_cut_guide(draw: ImageDraw.ImageDraw, x: int, top: int, bottom: int) -> None:
-    dash = 18
-    gap = 14
-    y = top
-    while y < bottom:
-        draw.line([(x, y), (x, min(bottom, y + dash))], fill=(146, 111, 54), width=2)
-        y += dash + gap
-
-
 def send_to_printer(path: Path, copies: int, requested: bool) -> PrintOutcome:
     if not requested:
         return PrintOutcome(printed=False, message="Rendered without printing because printing was disabled.")
@@ -283,24 +272,36 @@ def send_to_printer(path: Path, copies: int, requested: bool) -> PrintOutcome:
     if command is None:
         raise HTTPException(status_code=500, detail="Print command could not be built.")
 
-    try:
-        completed = subprocess.run(command, check=True, capture_output=True, text=True, timeout=30)
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=500, detail="The lpr command is not available on this machine.") from exc
-    except subprocess.CalledProcessError as exc:
-        detail = (exc.stderr or exc.stdout or "Printing failed.").strip()
-        raise HTTPException(status_code=502, detail=detail) from exc
-    except subprocess.TimeoutExpired as exc:
-        raise HTTPException(status_code=504, detail="Timed out while sending the print job.") from exc
+    attempts: list[list[str]] = [command]
+    if LPR_OPTIONS:
+        attempts.append(build_print_command(path, copies, include_options=False))
 
-    message = completed.stdout.strip() or "Print job sent."
-    return PrintOutcome(printed=True, message=message, command=command)
+    last_error: str | None = None
+    for attempt_index, attempt_command in enumerate(attempts, start=1):
+        try:
+            completed = subprocess.run(attempt_command, check=True, capture_output=True, text=True, timeout=30)
+            if attempt_index > 1:
+                message = completed.stdout.strip() or "Print job sent with fallback command."
+            else:
+                message = completed.stdout.strip() or "Print job sent."
+            return PrintOutcome(printed=True, message=message, command=attempt_command)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=500, detail="The lpr command is not available on this machine.") from exc
+        except subprocess.CalledProcessError as exc:
+            last_error = (exc.stderr or exc.stdout or "Printing failed.").strip()
+            continue
+        except subprocess.TimeoutExpired as exc:
+            raise HTTPException(status_code=504, detail="Timed out while sending the print job.") from exc
+
+    detail = last_error or "Printing failed."
+    raise HTTPException(status_code=502, detail=detail)
 
 
-def build_print_command(path: Path, copies: int) -> list[str]:
+def build_print_command(path: Path, copies: int, include_options: bool = True) -> list[str]:
     command = ["lpr", "-P", PRINTER_NAME]
     if copies > 1:
         command.extend(["-#", str(copies)])
-    command.extend(LPR_OPTIONS)
+    if include_options:
+        command.extend(LPR_OPTIONS)
     command.append(str(path))
     return command
