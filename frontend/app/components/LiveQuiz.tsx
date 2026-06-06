@@ -9,7 +9,7 @@ type Role = "player" | "admin";
 type ConnectionStatus = "connecting" | "connected" | "offline";
 
 type AppProps = {
-  frontendPod: string;
+  serverName: string;
 };
 
 type Question = {
@@ -63,8 +63,16 @@ type Snapshot = {
     answer_indices: number[];
     correct: boolean | null;
     points: number | null;
+    last_result: {
+      question_id: string;
+      correct: boolean | null;
+      points: number;
+      answered: boolean;
+    } | null;
   };
 };
+
+type ServerMessage = Snapshot | { type: "removed" };
 
 const optionClasses = ["option-red", "option-blue", "option-gold", "option-green"];
 const optionLabels = ["A", "B", "C", "D", "E", "F"];
@@ -124,7 +132,15 @@ function useQuizSocket(role: Role) {
       };
 
       socket.onmessage = (event) => {
-        const data = JSON.parse(event.data) as Snapshot;
+        const data = JSON.parse(event.data) as ServerMessage;
+        if (data.type === "removed") {
+          if (role === "player") {
+            window.localStorage.removeItem(joinNameKey);
+            window.localStorage.removeItem(playerIdKey);
+          }
+          setSnapshot(null);
+          return;
+        }
         if (data.type === "state") {
           setSnapshot(data);
           if (role === "player" && data.you.player_id) {
@@ -178,12 +194,12 @@ function ConnectionPill({ status }: { status: ConnectionStatus }) {
 function Shell({
   children,
   status,
-  frontendPod,
+  serverName,
   compact = false,
 }: {
   children: React.ReactNode;
   status: ConnectionStatus;
-  frontendPod: string;
+  serverName: string;
   compact?: boolean;
 }) {
   return (
@@ -191,7 +207,6 @@ function Shell({
       <div className="stage-wash" />
       <header className="topbar">
         <Link className="brand" href="/">
-          <span className="brand-mark">M</span>
           <span className="brand-copy">
             <strong>Xiaxia</strong>
             <small>23rd BDay Quiz</small>
@@ -201,9 +216,9 @@ function Shell({
           <Link className="nav-link" href="/">
             Spelers
           </Link>
-          <span className="pod-pill" title="Frontend pod">
-            <span>Pod</span>
-            <b>{frontendPod}</b>
+          <span className="server-pill" title="Server">
+            <span>Server</span>
+            <b>{serverName}</b>
           </span>
           <ConnectionPill status={status} />
         </nav>
@@ -313,11 +328,11 @@ function TimerPill({ snapshot }: { snapshot: Snapshot }) {
 function JoinScreen({
   status,
   onJoin,
-  frontendPod,
+  serverName,
 }: {
   status: ConnectionStatus;
   onJoin: (name: string) => void;
-  frontendPod: string;
+  serverName: string;
 }) {
   const [name, setName] = useState("");
 
@@ -330,7 +345,7 @@ function JoinScreen({
   }
 
   return (
-    <Shell frontendPod={frontendPod} status={status}>
+    <Shell serverName={serverName} status={status}>
       <section className="join-layout">
         <div className="join-copy">
           <p className="eyebrow">Live party quiz</p>
@@ -398,16 +413,31 @@ function QuizOptions({
   onAnswer: (optionIndices: number[]) => void;
 }) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const locked = answered || isSubmitting;
   const visibleSelection = answered ? submittedIndices : selectedIndices;
 
   function selectOption(index: number) {
+    if (locked) {
+      return;
+    }
     if (!question.allows_multiple) {
+      setSelectedIndices([index]);
+      setIsSubmitting(true);
       onAnswer([index]);
       return;
     }
     setSelectedIndices((current) =>
       current.includes(index) ? current.filter((item) => item !== index) : [...current, index],
     );
+  }
+
+  function submitMultiple() {
+    if (selectedIndices.length === 0 || locked) {
+      return;
+    }
+    setIsSubmitting(true);
+    onAnswer(selectedIndices);
   }
 
   return (
@@ -421,7 +451,7 @@ function QuizOptions({
               className={`answer-option ${optionClasses[index % optionClasses.length]} ${
                 selected ? "selected" : ""
               }`}
-              disabled={answered}
+              disabled={locked}
               key={choice}
               onClick={() => selectOption(index)}
               type="button"
@@ -435,8 +465,8 @@ function QuizOptions({
       {question.allows_multiple && !answered ? (
         <button
           className="answer-submit"
-          disabled={selectedIndices.length === 0}
-          onClick={() => onAnswer(selectedIndices)}
+          disabled={selectedIndices.length === 0 || locked}
+          onClick={submitMultiple}
           type="button"
         >
           Antwoorden bevestigen
@@ -485,26 +515,21 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
     return <Lobby snapshot={snapshot} />;
   }
 
-  const correctIndices = question.correct_indices ?? [];
   const totalAnswers = snapshot.answer_counts.reduce((sum, count) => sum + count, 0);
+  const resultText =
+    snapshot.you.correct === true
+      ? `Goed: +${snapshot.you.points ?? 0}`
+      : snapshot.you.answered
+        ? "Incorrect"
+        : "Geen antwoord";
 
   return (
     <section className="play-layout">
       <div className="question-card reveal-card">
         <QuestionHeader snapshot={snapshot} />
         <h1>{question.prompt}</h1>
-        <div className="answer-reveal">
-          <span>Correct antwoord</span>
-          <strong>{correctIndices.map((index) => question.choices[index]).join(", ")}</strong>
-        </div>
         <div className="result-strip">
-          {snapshot.you.correct === true ? (
-            <strong>Goed: +{snapshot.you.points ?? 0}</strong>
-          ) : snapshot.you.correct === false ? (
-            <strong>Net mis</strong>
-          ) : (
-            <strong>Geen antwoord</strong>
-          )}
+          <strong>{resultText}</strong>
         </div>
         <div className="bars">
           {question.choices.map((choice, index) => {
@@ -514,10 +539,7 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
               <div className="bar-row" key={choice}>
                 <span>{choice}</span>
                 <div className="bar-track">
-                  <div
-                    className={`bar-fill ${correctIndices.includes(index) ? "bar-correct" : ""}`}
-                    style={{ width: `${width}%` }}
-                  />
+                  <div className="bar-fill" style={{ width: `${width}%` }} />
                 </div>
                 <strong>{count}</strong>
               </div>
@@ -527,6 +549,111 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
       </div>
       <Leaderboard entries={snapshot.leaderboard} title="Tussenstand" />
     </section>
+  );
+}
+
+function ResultModal({ snapshot }: { snapshot: Snapshot }) {
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+  const question = snapshot.current_question;
+  const currentRevealResult =
+    snapshot.phase === "reveal" && question
+      ? {
+          answered: snapshot.you.answered,
+          correct: snapshot.you.correct,
+          points: snapshot.you.points ?? 0,
+          questionId: question.id,
+        }
+      : null;
+  const lastResult =
+    !currentRevealResult &&
+    snapshot.you.last_result &&
+    snapshot.you.last_result.question_id !== question?.id
+      ? {
+          answered: snapshot.you.last_result.answered,
+          correct: snapshot.you.last_result.correct,
+          points: snapshot.you.last_result.points,
+          questionId: snapshot.you.last_result.question_id,
+        }
+      : null;
+  const result = currentRevealResult ?? lastResult;
+  const resultKey = result
+    ? `${result.questionId}:${result.correct ?? "missing"}:${result.points}:${result.answered}`
+    : null;
+  const visible = Boolean(resultKey && dismissedKey !== resultKey);
+  const isCorrect = result?.correct === true;
+
+  useEffect(() => {
+    if (!visible || !isCorrect || !resultKey) {
+      return;
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    let cancelled = false;
+    void import("canvas-confetti").then(({ default: confetti }) => {
+      if (cancelled) {
+        return;
+      }
+
+      const colors = ["#f3d78f", "#fffaf0", "#b5c7a9", "#ddb0a4"];
+      void confetti({
+        colors,
+        decay: 0.92,
+        gravity: 0.9,
+        origin: { x: 0.5, y: 0.58 },
+        particleCount: 110,
+        spread: 82,
+        startVelocity: 38,
+        ticks: 95,
+      });
+      window.setTimeout(() => {
+        if (!cancelled) {
+          void confetti({
+            colors,
+            decay: 0.92,
+            gravity: 0.95,
+            origin: { x: 0.25, y: 0.65 },
+            particleCount: 55,
+            spread: 64,
+            startVelocity: 32,
+            ticks: 85,
+          });
+        }
+      }, 180);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isCorrect, resultKey, visible]);
+
+  if (!visible || !result) {
+    return null;
+  }
+
+  const title = isCorrect ? "Je had het goed" : "Je had het incorrect";
+  const detail = isCorrect
+    ? `+${result.points} punten`
+    : result.answered
+      ? "Volgende vraag komt eraan."
+      : "Geen antwoord ingestuurd.";
+
+  return (
+    <div className="result-modal-backdrop" role="presentation">
+      <section aria-labelledby="result-modal-title" aria-modal="true" className="result-modal" role="dialog">
+        <span className={`result-modal-icon ${isCorrect ? "result-modal-icon-good" : "result-modal-icon-bad"}`}>
+          {isCorrect ? "OK" : "!"}
+        </span>
+        <p className="eyebrow">Resultaat</p>
+        <h2 id="result-modal-title">{title}</h2>
+        <p>{detail}</p>
+        <button className="primary-button result-modal-button" onClick={() => setDismissedKey(resultKey)} type="button">
+          <span>Sluiten</span>
+        </button>
+      </section>
+    </div>
   );
 }
 
@@ -552,7 +679,7 @@ function FinalView({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-export function PlayerApp({ frontendPod }: AppProps) {
+export function PlayerApp({ serverName }: AppProps) {
   const { snapshot, status, send } = useQuizSocket("player");
   const joined = Boolean(snapshot?.you.player_id);
 
@@ -570,11 +697,11 @@ export function PlayerApp({ frontendPod }: AppProps) {
   }
 
   if (!joined) {
-    return <JoinScreen frontendPod={frontendPod} onJoin={join} status={status} />;
+    return <JoinScreen serverName={serverName} onJoin={join} status={status} />;
   }
 
   return (
-    <Shell frontendPod={frontendPod} status={status}>
+    <Shell serverName={serverName} status={status}>
       {!snapshot ? null : snapshot.phase === "lobby" ? (
         <Lobby snapshot={snapshot} />
       ) : snapshot.phase === "question" ? (
@@ -584,6 +711,7 @@ export function PlayerApp({ frontendPod }: AppProps) {
       ) : (
         <FinalView snapshot={snapshot} />
       )}
+      {snapshot ? <ResultModal snapshot={snapshot} /> : null}
     </Shell>
   );
 }
@@ -626,10 +754,13 @@ function AdminControls({
 
   return (
     <section className="admin-controls">
-      <AdminButton onClick={() => admin("start")} variant="primary">
+      <AdminButton disabled={!snapshot || phase !== "lobby"} onClick={() => admin("start")} variant="primary">
         Start
       </AdminButton>
-      <AdminButton disabled={phase === "question"} onClick={() => admin("next")} variant="primary">
+      <AdminButton disabled={phase !== "question"} onClick={() => admin("reveal")} variant="primary">
+        Toon resultaten
+      </AdminButton>
+      <AdminButton disabled={phase === "final"} onClick={() => admin("next")} variant="primary">
         Volgende
       </AdminButton>
       <AdminButton onClick={() => admin("previous")}>Vorige</AdminButton>
@@ -670,7 +801,13 @@ function AdminQuestionCard({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-function PlayerTable({ players }: { players: Player[] }) {
+function PlayerTable({
+  onRemovePlayer,
+  players,
+}: {
+  onRemovePlayer: (playerId: string) => void;
+  players: Player[];
+}) {
   return (
     <section className="admin-card">
       <div className="panel-heading">
@@ -684,6 +821,14 @@ function PlayerTable({ players }: { players: Player[] }) {
             <strong>{player.name}</strong>
             <span>{player.answered ? "antwoord binnen" : "wacht"}</span>
             <b>{player.score}</b>
+            <button
+              aria-label={`Verwijder ${player.name}`}
+              className="remove-player-button"
+              onClick={() => onRemovePlayer(player.id)}
+              type="button"
+            >
+              Verwijder
+            </button>
           </div>
         ))}
       </div>
@@ -716,11 +861,15 @@ function QuestionRail({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-export function AdminApp({ frontendPod }: AppProps) {
+export function AdminApp({ serverName }: AppProps) {
   const { snapshot, status, send } = useQuizSocket("admin");
 
+  function removePlayer(playerId: string) {
+    send({ type: "admin", action: "remove_player", player_id: playerId });
+  }
+
   return (
-    <Shell compact frontendPod={frontendPod} status={status}>
+    <Shell compact serverName={serverName} status={status}>
       <section className="admin-layout">
         <div className="admin-main">
           <div className="admin-hero">
@@ -735,7 +884,7 @@ export function AdminApp({ frontendPod }: AppProps) {
         </div>
         <aside className="admin-side">
           {snapshot ? <Leaderboard entries={snapshot.leaderboard} title="Ranking" /> : null}
-          {snapshot ? <PlayerTable players={snapshot.players} /> : null}
+          {snapshot ? <PlayerTable onRemovePlayer={removePlayer} players={snapshot.players} /> : null}
         </aside>
       </section>
     </Shell>

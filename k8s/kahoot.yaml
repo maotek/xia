@@ -101,10 +101,10 @@ spec:
           image: ghcr.io/maotek/kahoot-frontend:latest
           imagePullPolicy: Always
           env:
-            - name: POD_NAME
+            - name: SERVER_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name
+                  fieldPath: spec.nodeName
           ports:
             - containerPort: 3000
               name: http

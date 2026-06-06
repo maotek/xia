@@ -196,6 +196,8 @@ class Player:
     connected: bool = True
     last_delta: int = 0
     last_correct: bool | None = None
+    last_result_question_id: str | None = None
+    last_answered: bool = False
 
 
 @dataclass
@@ -233,6 +235,21 @@ class GameState:
             player.streak = 0
             player.last_delta = 0
             player.last_correct = None
+            player.last_result_question_id = None
+            player.last_answered = False
+
+    def finalize_unanswered(self) -> None:
+        question = self.current_question
+        if not question or question["kind"] != "quiz":
+            return
+
+        for player in self.players.values():
+            if player.id in self.answers:
+                continue
+            player.last_delta = 0
+            player.last_correct = False
+            player.last_result_question_id = question["id"]
+            player.last_answered = False
 
     def start_question(self, index: int) -> None:
         if index >= len(QUESTIONS):
@@ -251,12 +268,10 @@ class GameState:
             time.time() + QUESTION_DURATION_SECONDS if question["kind"] == "quiz" else None
         )
         self.answers = {}
-        for player in self.players.values():
-            player.last_delta = 0
-            player.last_correct = None
 
     def reveal(self) -> None:
         if self.current_index is not None:
+            self.finalize_unanswered()
             self.phase = "reveal"
             self.question_deadline_at = None
 
@@ -282,7 +297,7 @@ app.add_middleware(
 )
 
 
-def public_question(question: dict[str, Any], role: Role, phase: Phase) -> dict[str, Any]:
+def public_question(question: dict[str, Any], role: Role) -> dict[str, Any]:
     payload = {
         "id": question["id"],
         "kind": question["kind"],
@@ -290,7 +305,7 @@ def public_question(question: dict[str, Any], role: Role, phase: Phase) -> dict[
         "choices": question.get("choices", []),
         "allows_multiple": len(question["correct_indices"]) > 1,
     }
-    if role == "admin" or phase in {"reveal", "final"}:
+    if role == "admin":
         payload["correct_indices"] = question["correct_indices"]
     return payload
 
@@ -359,8 +374,20 @@ def players_payload() -> list[dict[str, Any]]:
 
 def snapshot(role: Role, player_id: str | None = None) -> dict[str, Any]:
     question = state.current_question
-    own_answer = state.answers.get(player_id or "")
-    current = public_question(question, role, state.phase) if question else None
+    active_player_id = player_id if player_id in state.players else None
+    active_player = state.players.get(active_player_id or "")
+    own_answer = state.answers.get(active_player_id or "")
+    current = public_question(question, role) if question else None
+    last_result = (
+        {
+            "question_id": active_player.last_result_question_id,
+            "correct": active_player.last_correct,
+            "points": active_player.last_delta,
+            "answered": active_player.last_answered,
+        }
+        if active_player and active_player.last_result_question_id
+        else None
+    )
 
     return {
         "type": "state",
@@ -379,11 +406,12 @@ def snapshot(role: Role, player_id: str | None = None) -> dict[str, Any]:
         if state.question_deadline_at
         else 0,
         "you": {
-            "player_id": player_id,
+            "player_id": active_player_id,
             "answered": own_answer is not None,
             "answer_indices": list(own_answer.option_indices) if own_answer else [],
             "correct": own_answer.correct if state.phase == "reveal" and own_answer else None,
             "points": own_answer.points if state.phase == "reveal" and own_answer else None,
+            "last_result": last_result,
         },
     }
 
@@ -499,6 +527,8 @@ async def handle_answer(connection: Connection, message: dict[str, Any]) -> None
     player = state.players[connection.player_id]
     player.last_delta = points
     player.last_correct = correct
+    player.last_result_question_id = question["id"]
+    player.last_answered = True
     player.streak = player.streak + 1 if correct else 0
     player.score += points
     state.answers[connection.player_id] = Answer(
@@ -517,17 +547,42 @@ async def handle_admin(message: dict[str, Any]) -> None:
     if action == "start":
         state.start_question(0)
         schedule_timer_unlocked()
+    elif action == "reveal":
+        if state.phase == "question":
+            state.reveal()
+            cancel_timer_unlocked()
     elif action == "next":
+        if state.phase == "question":
+            state.finalize_unanswered()
+            cancel_timer_unlocked()
         next_index = 0 if state.current_index is None else state.current_index + 1
         state.start_question(next_index)
         schedule_timer_unlocked()
     elif action == "previous":
+        if state.phase == "question":
+            state.finalize_unanswered()
+            cancel_timer_unlocked()
         previous_index = 0 if state.current_index is None else max(0, state.current_index - 1)
         state.start_question(previous_index)
         schedule_timer_unlocked()
     elif action == "reset":
         state.reset_scores()
         cancel_timer_unlocked()
+    elif action == "remove_player":
+        player_id = str(message.get("player_id", "")).strip()
+        if player_id in state.players:
+            del state.players[player_id]
+            state.answers.pop(player_id, None)
+            for connection in list(connections):
+                if connection.player_id == player_id:
+                    connection.player_id = None
+                    try:
+                        await connection.websocket.send_json({"type": "removed"})
+                    except Exception:
+                        pass
+            if state.phase == "question" and all_connected_players_answered():
+                state.reveal()
+                cancel_timer_unlocked()
 
 
 @app.get("/health")

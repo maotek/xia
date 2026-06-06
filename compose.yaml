@@ -21,7 +21,7 @@ services:
     image: ghcr.io/maotek/kahoot-frontend:latest
     pull_policy: always
     environment:
-      POD_NAME: kahoot-frontend-local
+      SERVER_NAME: kahoot-local-server
     depends_on:
       backend:
         condition: service_healthy
