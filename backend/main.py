@@ -206,6 +206,7 @@ class Answer:
     correct: bool
     points: int
     elapsed: float
+    scored: bool = False
 
 
 @dataclass(eq=False)
@@ -239,10 +240,30 @@ class GameState:
             player.last_result_question_id = None
             player.last_answered = False
 
-    def finalize_unanswered(self) -> None:
+    def clear_last_results(self) -> None:
+        for player in self.players.values():
+            player.last_delta = 0
+            player.last_correct = None
+            player.last_result_question_id = None
+            player.last_answered = False
+
+    def finalize_question(self) -> None:
         question = self.current_question
         if not question or question["kind"] != "quiz":
             return
+
+        for player_id, answer in self.answers.items():
+            player = self.players.get(player_id)
+            if player is None:
+                continue
+            if not answer.scored:
+                player.score += answer.points
+                player.streak = player.streak + 1 if answer.correct else 0
+                answer.scored = True
+            player.last_delta = answer.points
+            player.last_correct = answer.correct
+            player.last_result_question_id = question["id"]
+            player.last_answered = True
 
         for player in self.players.values():
             if player.id in self.answers:
@@ -251,8 +272,10 @@ class GameState:
             player.last_correct = False
             player.last_result_question_id = question["id"]
             player.last_answered = False
+            player.streak = 0
 
     def start_question(self, index: int) -> None:
+        self.clear_last_results()
         if index >= len(QUESTIONS):
             self.phase = "final"
             self.current_index = None
@@ -272,7 +295,7 @@ class GameState:
 
     def reveal(self) -> None:
         if self.current_index is not None:
-            self.finalize_unanswered()
+            self.finalize_question()
             self.phase = "reveal"
             self.question_deadline_at = None
 
@@ -515,6 +538,11 @@ async def handle_answer(connection: Connection, message: dict[str, Any]) -> None
     question = state.current_question
     if not question or question["kind"] != "quiz":
         return
+    if (
+        state.question_started_at is None
+        or time.monotonic() - state.question_started_at > QUESTION_DURATION_SECONDS
+    ):
+        return
 
     option_indices = message.get("option_indices")
     if not isinstance(option_indices, list) or not option_indices:
@@ -530,13 +558,6 @@ async def handle_answer(connection: Connection, message: dict[str, Any]) -> None
         return
 
     correct, points, elapsed = score_answer(selected_indices)
-    player = state.players[connection.player_id]
-    player.last_delta = points
-    player.last_correct = correct
-    player.last_result_question_id = question["id"]
-    player.last_answered = True
-    player.streak = player.streak + 1 if correct else 0
-    player.score += points
     state.answers[connection.player_id] = Answer(
         option_indices=selected_indices,
         correct=correct,
@@ -559,14 +580,14 @@ async def handle_admin(message: dict[str, Any]) -> None:
             cancel_timer_unlocked()
     elif action == "next":
         if state.phase == "question":
-            state.finalize_unanswered()
+            state.finalize_question()
             cancel_timer_unlocked()
         next_index = 0 if state.current_index is None else state.current_index + 1
         state.start_question(next_index)
         schedule_timer_unlocked()
     elif action == "previous":
         if state.phase == "question":
-            state.finalize_unanswered()
+            state.finalize_question()
             cancel_timer_unlocked()
         previous_index = 0 if state.current_index is None else max(0, state.current_index - 1)
         state.start_question(previous_index)

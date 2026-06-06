@@ -237,9 +237,11 @@ function rankLabel(rank: number) {
 
 function Leaderboard({
   entries,
+  showDeltas = false,
   title = "Ranking",
 }: {
   entries: LeaderboardEntry[];
+  showDeltas?: boolean;
   title?: string;
 }) {
   return (
@@ -263,7 +265,7 @@ function Leaderboard({
               </div>
               <div className="score-block">
                 <strong>{player.score}</strong>
-                {player.last_delta > 0 ? <span>+{player.last_delta}</span> : null}
+                {showDeltas && player.last_delta > 0 ? <span>+{player.last_delta}</span> : null}
               </div>
             </div>
           ))
@@ -547,7 +549,7 @@ function RevealView({ snapshot }: { snapshot: Snapshot }) {
           })}
         </div>
       </div>
-      <Leaderboard entries={snapshot.leaderboard} title="Tussenstand" />
+      <Leaderboard entries={snapshot.leaderboard} showDeltas title="Tussenstand" />
     </section>
   );
 }
@@ -564,18 +566,7 @@ function ResultModal({ snapshot }: { snapshot: Snapshot }) {
           questionId: question.id,
         }
       : null;
-  const lastResult =
-    !currentRevealResult &&
-    snapshot.you.last_result &&
-    snapshot.you.last_result.question_id !== question?.id
-      ? {
-          answered: snapshot.you.last_result.answered,
-          correct: snapshot.you.last_result.correct,
-          points: snapshot.you.last_result.points,
-          questionId: snapshot.you.last_result.question_id,
-        }
-      : null;
-  const result = currentRevealResult ?? lastResult;
+  const result = currentRevealResult;
   const resultKey = result
     ? `${result.questionId}:${result.correct ?? "missing"}:${result.points}:${result.answered}`
     : null;
@@ -883,7 +874,13 @@ export function AdminApp({ serverName }: AppProps) {
           {snapshot ? <QuestionRail snapshot={snapshot} /> : null}
         </div>
         <aside className="admin-side">
-          {snapshot ? <Leaderboard entries={snapshot.leaderboard} title="Ranking" /> : null}
+          {snapshot ? (
+            <Leaderboard
+              entries={snapshot.leaderboard}
+              showDeltas={snapshot.phase === "reveal"}
+              title="Ranking"
+            />
+          ) : null}
           {snapshot ? <PlayerTable onRemovePlayer={removePlayer} players={snapshot.players} /> : null}
         </aside>
       </section>
