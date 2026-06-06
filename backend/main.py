@@ -223,6 +223,7 @@ class GameState:
     question_deadline_at: float | None = None
     players: dict[str, Player] = field(default_factory=dict)
     answers: dict[str, Answer] = field(default_factory=dict)
+    removed_player_ids: set[str] = field(default_factory=set)
 
     def reset_scores(self) -> None:
         self.phase = "lobby"
@@ -488,6 +489,11 @@ async def handle_join(connection: Connection, message: dict[str, Any]) -> None:
         return
 
     requested_id = str(message.get("player_id", "")).strip()
+    if requested_id and requested_id in state.removed_player_ids:
+        connection.player_id = None
+        await connection.websocket.send_json({"type": "removed"})
+        return
+
     player_id = requested_id if requested_id in state.players else uuid.uuid4().hex
     player = state.players.get(player_id)
 
@@ -571,6 +577,7 @@ async def handle_admin(message: dict[str, Any]) -> None:
     elif action == "remove_player":
         player_id = str(message.get("player_id", "")).strip()
         if player_id in state.players:
+            state.removed_player_ids.add(player_id)
             del state.players[player_id]
             state.answers.pop(player_id, None)
             for connection in list(connections):
