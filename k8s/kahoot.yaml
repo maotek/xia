@@ -137,12 +137,14 @@ metadata:
   name: kahoot-ollama
   namespace: ollama
   annotations:
+    cert-manager.io/issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
         - xiaxia23bday.maotek.nl
+      secretName: kahoot-tls
   rules:
     - host: xiaxia23bday.maotek.nl
       http:
