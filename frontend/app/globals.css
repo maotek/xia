@@ -1809,6 +1809,34 @@ canvas {
   background: var(--charcoal);
 }
 
+.chat-message-content {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.chat-thinking {
+  margin: 0 0 10px;
+  border: 1px solid rgba(98, 115, 105, 0.28);
+  border-radius: 12px;
+  padding: 8px 10px;
+  color: var(--muted);
+  background: rgba(98, 115, 105, 0.08);
+  font-size: 12px;
+  white-space: normal;
+}
+
+.chat-thinking summary {
+  cursor: pointer;
+  font-weight: 900;
+  user-select: none;
+}
+
+.chat-thinking p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .chat-typing {
   display: inline-flex;
   align-items: center;

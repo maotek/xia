@@ -79,7 +79,7 @@ The `letsencrypt-prod` issuer and `kahoot-tls` certificate should report
 The chat page is available at `/chat`. The manifest expects an existing
 service named `ollama` on port `80` in the `ollama` namespace. A separate
 Ingress exposes only Ollama's `/api/chat` endpoint on the application host.
-The frontend always uses the `qwen3.5:2b` model.
+The frontend always uses the `qwen2.5:1.5b` model.
 
 The browser sends the system prompt and conversation directly to Ollama.
 There is no application backend, authentication, or rate limiting in this

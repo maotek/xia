@@ -8,6 +8,7 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  thinking?: string;
 };
 
 type OllamaChatChunk = {
@@ -15,10 +16,11 @@ type OllamaChatChunk = {
   error?: string;
   message?: {
     content?: string;
+    thinking?: string;
   };
 };
 
-const model = "qwen3.5:2b";
+const model = "qwen2.5:1.5b";
 const systemPrompt =
   "You are a birthday celebrator for Xiaxia. Make her in the spotlight and make her feel special. Be creative, funny, and engaging. Use emojis and playful language to make the conversation lively. Ask her questions about her birthday plans, favorite memories, and what makes her happy.";
 
@@ -65,7 +67,7 @@ export function ChatInterface() {
     setIsStreaming(true);
     setMessages([
       ...conversation,
-      { id: assistantId, role: "assistant", content: "" },
+      { id: assistantId, role: "assistant", content: "", thinking: "" },
     ]);
 
     const controller = new AbortController();
@@ -80,6 +82,7 @@ export function ChatInterface() {
         body: JSON.stringify({
           model,
           stream: true,
+          think: false,
           messages: [
             { role: "system", content: systemPrompt },
             ...conversation.map(({ role, content: messageContent }) => ({
@@ -111,6 +114,20 @@ export function ChatInterface() {
         const chunk = JSON.parse(line) as OllamaChatChunk;
         if (chunk.error) {
           throw new Error(chunk.error);
+        }
+
+        const thinking = chunk.message?.thinking;
+        if (thinking) {
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === assistantId
+                ? {
+                    ...message,
+                    thinking: (message.thinking ?? "") + thinking,
+                  }
+                : message,
+            ),
+          );
         }
 
         const token = chunk.message?.content;
@@ -145,7 +162,9 @@ export function ChatInterface() {
 
       setMessages((current) =>
         current.map((message) =>
-          message.id === assistantId && !message.content
+          message.id === assistantId &&
+          !message.content &&
+          !message.thinking
             ? { ...message, content: "Geen antwoord ontvangen." }
             : message,
         ),
@@ -154,7 +173,9 @@ export function ChatInterface() {
       if (controller.signal.aborted) {
         setMessages((current) =>
           current.map((message) =>
-            message.id === assistantId && !message.content
+            message.id === assistantId &&
+            !message.content &&
+            !message.thinking
               ? { ...message, content: "Genereren gestopt." }
               : message,
           ),
@@ -167,7 +188,10 @@ export function ChatInterface() {
         );
         setMessages((current) =>
           current.filter(
-            (message) => message.id !== assistantId || Boolean(message.content),
+            (message) =>
+              message.id !== assistantId ||
+              Boolean(message.content) ||
+              Boolean(message.thinking),
           ),
         );
       }
@@ -238,13 +262,26 @@ export function ChatInterface() {
                 >
                   <span>{message.role === "user" ? "Jij" : "AI"}</span>
                   <div>
-                    {message.content || (
+                    {message.thinking ? (
+                      <details
+                        className="chat-thinking"
+                        open={!message.content}
+                      >
+                        <summary>Denkproces</summary>
+                        <p>{message.thinking}</p>
+                      </details>
+                    ) : null}
+                    {message.content ? (
+                      <span className="chat-message-content">
+                        {message.content}
+                      </span>
+                    ) : !message.thinking ? (
                       <span className="chat-typing" aria-label="AI antwoordt">
                         <i />
                         <i />
                         <i />
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </article>
               ))
