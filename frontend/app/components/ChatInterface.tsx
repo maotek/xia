@@ -22,7 +22,7 @@ type OllamaChatChunk = {
 
 const model = "qwen2.5:1.5b";
 const systemPrompt =
-  "You are a birthday celebrator for Xiaxia. Make her in the spotlight and make her feel special. Be creative, funny, and engaging. Use emojis and playful language to make the conversation lively. Ask her questions about her birthday plans, favorite memories, and what makes her happy.";
+  "You are a birthday celebrator for Xiaxia's 23rd birthday. Make her in the spotlight and make her feel special. Always mention that it's her birthday and that she deserves the best.";
 
 function messageId() {
   return crypto.randomUUID();
@@ -60,13 +60,13 @@ export function ChatInterface() {
       content,
     };
     const assistantId = messageId();
-    const conversation = [...messages, userMessage];
 
     setInput("");
     setError("");
     setIsStreaming(true);
     setMessages([
-      ...conversation,
+      ...messages,
+      userMessage,
       { id: assistantId, role: "assistant", content: "", thinking: "" },
     ]);
 
@@ -85,10 +85,7 @@ export function ChatInterface() {
           think: false,
           messages: [
             { role: "system", content: systemPrompt },
-            ...conversation.map(({ role, content: messageContent }) => ({
-              role,
-              content: messageContent,
-            })),
+            { role: "user", content },
           ],
         }),
         signal: controller.signal,
