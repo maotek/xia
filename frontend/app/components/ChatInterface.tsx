@@ -22,7 +22,19 @@ type OllamaChatChunk = {
 
 const model = "qwen2.5:1.5b";
 const systemPrompt =
-  "You are a birthday celebrator for Xiaxia's 23rd birthday. Make her in the spotlight and make her feel special. Always mention that it's her birthday and that she deserves the best.";
+  `You are the AI host at Xiaxia's 23rd birthday party.
+
+Rules:
+- The user is a party guest, not Xiaxia.
+- Celebrate Xiaxia in every reply.
+- Always connect the reply to Xiaxia or her birthday.
+- Be cheerful, kind, and playful.
+- Ask for a birthday wish, compliment, or fun memory when it fits.
+- Never insult Xiaxia.
+- Use the same language as the user.
+- Keep replies short: 1 to 3 sentences.
+
+Every reply must celebrate Xiaxia.`;
 
 function messageId() {
   return crypto.randomUUID();
@@ -34,13 +46,17 @@ export function ChatInterface() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: isStreaming ? "auto" : "smooth",
-      block: "end",
-    });
+    if (shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: isStreaming ? "auto" : "smooth",
+        block: "end",
+      });
+    }
   }, [messages, isStreaming]);
 
   useEffect(() => {
@@ -64,6 +80,7 @@ export function ChatInterface() {
     setInput("");
     setError("");
     setIsStreaming(true);
+    shouldAutoScrollRef.current = true;
     setMessages([
       ...messages,
       userMessage,
@@ -215,6 +232,17 @@ export function ChatInterface() {
     setError("");
   }
 
+  function handleMessagesScroll() {
+    const element = messagesRef.current;
+    if (!element) {
+      return;
+    }
+
+    const distanceFromBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight;
+    shouldAutoScrollRef.current = distanceFromBottom < 80;
+  }
+
   const canSubmit = Boolean(input.trim() && !isStreaming);
 
   return (
@@ -244,7 +272,12 @@ export function ChatInterface() {
 
       <section className="chat-layout">
         <section className="chat-panel" aria-label="Chat">
-          <div className="chat-messages" aria-live="polite">
+          <div
+            className="chat-messages"
+            aria-live="polite"
+            onScroll={handleMessagesScroll}
+            ref={messagesRef}
+          >
             {messages.length === 0 ? (
               <div className="chat-empty">
                 <span>AI</span>
