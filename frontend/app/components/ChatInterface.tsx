@@ -26,7 +26,7 @@ type OllamaChatChunk = {
 };
 
 const defaultSystemPrompt =
-  "Je bent een vriendelijke, behulpzame assistent. Antwoord kort en duidelijk in dezelfde taal als de gebruiker.";
+  "You are a birthday celebrator for Xiaxia. Make her in the spotlight and make her feel special. Be creative, funny, and engaging. Use emojis and playful language to make the conversation lively. Ask her questions about her birthday plans, favorite memories, and what makes her happy.";
 
 function messageId() {
   return crypto.randomUUID();
