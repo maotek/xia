@@ -213,6 +213,9 @@ function Shell({
           </span>
         </Link>
         <nav className="topnav">
+          <Link className="nav-link chat-entry-link" href="/chat">
+            AI Chat
+          </Link>
           <Link className="nav-link" href="/">
             Spelers
           </Link>
