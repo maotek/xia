@@ -1680,16 +1680,12 @@ canvas {
 .chat-layout {
   position: relative;
   z-index: 1;
-  display: grid;
   width: min(1180px, 100%);
   min-height: 0;
   flex: 1;
-  grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
-  gap: 18px;
   margin: 18px auto 0;
 }
 
-.chat-settings,
 .chat-panel {
   min-width: 0;
   border: 1px solid rgba(255, 232, 184, 0.42);
@@ -1700,38 +1696,6 @@ canvas {
   backdrop-filter: blur(22px);
 }
 
-.chat-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 22px;
-  overflow-y: auto;
-}
-
-.chat-settings h1 {
-  margin: 0;
-  color: var(--ink);
-  font-size: 2rem;
-  line-height: 1.05;
-}
-
-.chat-settings > div > p:last-child {
-  margin: 12px 0 10px;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.chat-settings label {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.chat-settings select,
-.chat-settings textarea,
 .chat-composer textarea {
   width: 100%;
   border: 2px solid transparent;
@@ -1740,29 +1704,11 @@ canvas {
   background: #fff5df;
 }
 
-.chat-settings select {
-  min-height: 48px;
-  border-radius: 14px;
-  padding: 0 12px;
-  font-weight: 800;
-}
-
-.chat-settings textarea {
-  min-height: 150px;
-  resize: vertical;
-  border-radius: 14px;
-  padding: 12px;
-  line-height: 1.45;
-}
-
-.chat-settings select:focus,
-.chat-settings textarea:focus,
 .chat-composer textarea:focus {
   border-color: var(--gold);
   background: #fffaf0;
 }
 
-.chat-settings-note,
 .chat-composer-hint {
   margin: 0;
   color: var(--muted);
@@ -1964,18 +1910,8 @@ canvas {
   }
 
   .chat-layout {
-    display: flex;
     flex: initial;
-    flex-direction: column;
     margin-top: 12px;
-  }
-
-  .chat-settings {
-    flex: none;
-  }
-
-  .chat-settings textarea {
-    min-height: 110px;
   }
 
   .chat-panel {
@@ -2000,17 +1936,8 @@ canvas {
     font-size: 11px;
   }
 
-  .chat-settings,
   .chat-panel {
     border-radius: 20px;
-  }
-
-  .chat-settings {
-    padding: 18px;
-  }
-
-  .chat-settings h1 {
-    font-size: 1.7rem;
   }
 
   .chat-messages {

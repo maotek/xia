@@ -10,13 +10,6 @@ type ChatMessage = {
   content: string;
 };
 
-type OllamaTagsResponse = {
-  models?: Array<{
-    name?: string;
-    model?: string;
-  }>;
-};
-
 type OllamaChatChunk = {
   done?: boolean;
   error?: string;
@@ -25,7 +18,8 @@ type OllamaChatChunk = {
   };
 };
 
-const defaultSystemPrompt =
+const model = "qwen3.5:2b";
+const systemPrompt =
   "You are a birthday celebrator for Xiaxia. Make her in the spotlight and make her feel special. Be creative, funny, and engaging. Use emojis and playful language to make the conversation lively. Ask her questions about her birthday plans, favorite memories, and what makes her happy.";
 
 function messageId() {
@@ -35,55 +29,10 @@ function messageId() {
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
-  const [models, setModels] = useState<string[]>([]);
-  const [model, setModel] = useState("");
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadModels() {
-      try {
-        const response = await fetch("/api/tags", {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Modellen ophalen mislukt (${response.status})`);
-        }
-
-        const data = (await response.json()) as OllamaTagsResponse;
-        const availableModels = (data.models ?? [])
-          .map((item) => item.name || item.model || "")
-          .filter(Boolean);
-
-        setModels(availableModels);
-        setModel((current) => current || availableModels[0] || "");
-        if (availableModels.length === 0) {
-          setError("Ollama heeft nog geen modellen beschikbaar.");
-        }
-      } catch (requestError) {
-        if (!controller.signal.aborted) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : "Kan geen verbinding maken met Ollama.",
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoadingModels(false);
-        }
-      }
-    }
-
-    void loadModels();
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -99,7 +48,7 @@ export function ChatInterface() {
   async function submit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     const content = input.trim();
-    if (!content || !model || isStreaming) {
+    if (!content || isStreaming) {
       return;
     }
 
@@ -132,7 +81,7 @@ export function ChatInterface() {
           model,
           stream: true,
           messages: [
-            { role: "system", content: systemPrompt.trim() },
+            { role: "system", content: systemPrompt },
             ...conversation.map(({ role, content: messageContent }) => ({
               role,
               content: messageContent,
@@ -245,7 +194,7 @@ export function ChatInterface() {
     setError("");
   }
 
-  const canSubmit = Boolean(input.trim() && model && !isStreaming);
+  const canSubmit = Boolean(input.trim() && !isStreaming);
 
   return (
     <main className="chat-shell">
@@ -273,46 +222,6 @@ export function ChatInterface() {
       </header>
 
       <section className="chat-layout">
-        <aside className="chat-settings">
-          <div>
-            <p className="eyebrow">Instellingen</p>
-            <h1>Praat met Xiaxia AI</h1>
-            <p>
-              Een eenvoudige, lokale chat via het Ollama-model in het cluster.
-            </p>
-          </div>
-
-          <label htmlFor="chat-model">Model</label>
-          <select
-            disabled={isLoadingModels || models.length === 0 || isStreaming}
-            id="chat-model"
-            onChange={(event) => setModel(event.target.value)}
-            value={model}
-          >
-            {isLoadingModels ? <option>Modellen laden...</option> : null}
-            {!isLoadingModels && models.length === 0 ? (
-              <option>Geen modellen gevonden</option>
-            ) : null}
-            {models.map((availableModel) => (
-              <option key={availableModel} value={availableModel}>
-                {availableModel}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="system-prompt">System prompt</label>
-          <textarea
-            disabled={isStreaming}
-            id="system-prompt"
-            onChange={(event) => setSystemPrompt(event.target.value)}
-            rows={8}
-            value={systemPrompt}
-          />
-          <p className="chat-settings-note">
-            De system prompt wordt bij ieder bericht opnieuw meegestuurd.
-          </p>
-        </aside>
-
         <section className="chat-panel" aria-label="Chat">
           <div className="chat-messages" aria-live="polite">
             {messages.length === 0 ? (
@@ -348,10 +257,9 @@ export function ChatInterface() {
             <form className="chat-composer" onSubmit={submit}>
               <textarea
                 aria-label="Bericht"
-                disabled={!model}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleInputKeyDown}
-                placeholder={model ? "Typ een bericht..." : "Geen model beschikbaar"}
+                placeholder="Typ een bericht..."
                 rows={1}
                 value={input}
               />

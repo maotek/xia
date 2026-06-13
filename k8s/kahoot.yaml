@@ -134,6 +134,30 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: kahoot-ollama
+  namespace: ollama
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - xiaxia23bday.maotek.nl
+  rules:
+    - host: xiaxia23bday.maotek.nl
+      http:
+        paths:
+          - path: /api/chat
+            pathType: Exact
+            backend:
+              service:
+                name: ollama
+                port:
+                  name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: kahoot
   namespace: kahoot
   annotations:

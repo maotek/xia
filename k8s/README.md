@@ -74,6 +74,17 @@ curl -I https://xiaxia23bday.maotek.nl
 The `letsencrypt-prod` issuer and `kahoot-tls` certificate should report
 `READY=True`.
 
+## Ollama chat
+
+The chat page is available at `/chat`. The manifest expects an existing
+service named `ollama` on port `80` in the `ollama` namespace. A separate
+Ingress exposes only Ollama's `/api/chat` endpoint on the application host.
+The frontend always uses the `qwen3.5:2b` model.
+
+The browser sends the system prompt and conversation directly to Ollama.
+There is no application backend, authentication, or rate limiting in this
+path, so anyone who can access the site can use the configured models.
+
 ## Troubleshooting
 
 If the certificate is not ready, inspect the Let's Encrypt HTTP-01 validation:
