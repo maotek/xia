@@ -84,7 +84,7 @@ metadata:
   name: kahoot-frontend
   namespace: kahoot
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app.kubernetes.io/name: kahoot

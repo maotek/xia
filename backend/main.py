@@ -56,7 +56,7 @@ QUESTIONS: list[dict[str, Any]] = [
         "kind": "quiz",
         "prompt": "Hoe lang ben ik?",
         "choices": ["160 cm", "163 cm", "165 cm", "167 cm"],
-        "correct_indices": [3],
+        "correct_indices": [2],
     },
     {
         "id": "hondenknuffel",
