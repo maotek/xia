@@ -256,6 +256,9 @@ export function ChatInterface() {
           </span>
         </Link>
         <nav className="chat-nav">
+          <Link className="nav-link" href="/teams">
+            Teams
+          </Link>
           <Link className="nav-link" href="/">
             Quiz
           </Link>

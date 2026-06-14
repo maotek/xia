@@ -1261,6 +1261,16 @@ canvas {
     font-size: 11px;
   }
 
+  .teams-entry-link {
+    display: inline-flex;
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 30px;
+    justify-self: start;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+
   .connection-pill {
     grid-column: 2;
     grid-row: 1;
@@ -2019,6 +2029,497 @@ canvas {
 
   .chat-send-button {
     width: 100%;
+  }
+}
+
+.teams-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding: 20px;
+  background: url("/quiz-stage.png") center / cover fixed;
+}
+
+.teams-shell::before {
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  background: rgba(19, 15, 11, 0.68);
+  content: "";
+}
+
+.teams-topbar {
+  position: sticky;
+  z-index: 5;
+  top: 12px;
+  display: flex;
+  width: min(1180px, 100%);
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 auto;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 232, 184, 0.36);
+  border-radius: 20px;
+  background: rgba(31, 25, 20, 0.88);
+  box-shadow: 0 16px 46px rgba(17, 12, 7, 0.24);
+  backdrop-filter: blur(22px);
+}
+
+.teams-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.teams-refresh-button {
+  min-height: 38px;
+  border: 1px solid rgba(255, 243, 216, 0.18);
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: var(--foreground);
+  background: rgba(255, 243, 216, 0.1);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.teams-dashboard,
+.teams-admin-layout {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  margin: 28px auto 0;
+}
+
+.teams-hero,
+.teams-admin-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.teams-hero h1,
+.teams-admin-hero h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(2.8rem, 7vw, 5.4rem);
+  line-height: 0.95;
+  text-wrap: balance;
+  text-shadow: 0 18px 46px rgba(0, 0, 0, 0.35);
+}
+
+.teams-hero > div > p:last-child,
+.teams-admin-hero > div > p:last-child {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: rgba(255, 248, 236, 0.78);
+  font-size: 16px;
+}
+
+.teams-admin-hero > span {
+  flex: none;
+  border: 1px solid rgba(255, 232, 184, 0.3);
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: var(--foreground);
+  background: rgba(31, 25, 20, 0.78);
+  font-weight: 850;
+}
+
+.team-create-grid label > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.team-create-grid input,
+.team-editor-player input {
+  width: 100%;
+  border: 2px solid transparent;
+  outline: none;
+  color: var(--ink);
+  background: #fff5df;
+}
+
+.team-create-grid input:focus,
+.team-editor-player input:focus {
+  border-color: var(--gold);
+  background: #fffaf0;
+}
+
+.teams-error,
+.team-editor-error {
+  border-radius: 14px;
+  padding: 11px 13px;
+  color: #7a261d;
+  background: #f4d3cd;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.teams-error {
+  margin: 0 0 18px;
+}
+
+.team-score-grid,
+.team-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.team-score-card,
+.team-create-card,
+.team-editor-card,
+.teams-empty-state,
+.teams-loading {
+  border: 1px solid rgba(255, 232, 184, 0.42);
+  border-radius: 24px;
+  color: var(--ink);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(22px);
+}
+
+.team-score-card {
+  padding: 18px;
+}
+
+.team-card-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+}
+
+.team-rank {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff8ec;
+  background: var(--sage);
+  font-weight: 950;
+}
+
+.team-card-heading h2,
+.team-card-heading p {
+  margin: 0;
+}
+
+.team-card-heading h2 {
+  font-size: 1.35rem;
+}
+
+.team-card-heading p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.team-card-heading > strong {
+  font-size: 2rem;
+}
+
+.team-total-track,
+.player-score-track {
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5dac9;
+}
+
+.team-total-track {
+  height: 8px;
+  margin: 14px 0 16px;
+}
+
+.team-total-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), #dfbd6e);
+  transition: width 300ms ease;
+}
+
+.team-player-distribution {
+  display: grid;
+  gap: 8px;
+}
+
+.team-player-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  border-radius: 13px;
+  padding: 8px;
+  background: rgba(98, 115, 105, 0.08);
+}
+
+.team-player-row > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fffaf0;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.team-player-row > div > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.team-player-row b {
+  color: var(--rose);
+}
+
+.player-score-track {
+  height: 5px;
+}
+
+.player-score-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sage);
+  transition: width 300ms ease;
+}
+
+.teams-loading,
+.teams-empty-state {
+  padding: 36px;
+  text-align: center;
+}
+
+.teams-empty-state h2,
+.teams-empty-state p {
+  margin: 0;
+}
+
+.teams-empty-state p {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.teams-admin-layout {
+  padding-bottom: 30px;
+}
+
+.team-create-card {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 20px;
+}
+
+.team-create-card h2,
+.team-editor-heading h2 {
+  margin: 0;
+}
+
+.team-create-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.team-create-grid label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 78px;
+  gap: 7px;
+}
+
+.team-create-grid label > span {
+  grid-column: 1 / -1;
+}
+
+.team-create-grid input,
+.team-editor-player input {
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 0 11px;
+  font-weight: 750;
+}
+
+.team-create-button,
+.team-save-button,
+.team-delete-button,
+.point-stepper button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-weight: 900;
+}
+
+.team-create-button,
+.team-save-button {
+  color: var(--ink);
+  background: #d8b15f;
+}
+
+.team-create-button {
+  justify-self: end;
+}
+
+.team-create-button:disabled,
+.team-save-button:disabled,
+.team-delete-button:disabled,
+.point-stepper button:disabled {
+  opacity: 0.45;
+}
+
+.team-editor-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.team-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.team-delete-button {
+  color: #fff8ec;
+  background: #a64f45;
+}
+
+.team-editor-players {
+  display: grid;
+  gap: 8px;
+}
+
+.team-editor-player {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 80px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-editor-player > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--muted);
+  background: #eee5d6;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.point-stepper {
+  display: flex;
+  gap: 5px;
+}
+
+.point-stepper button {
+  min-width: 42px;
+  padding: 0 8px;
+  color: var(--ink);
+  background: #d5cab7;
+}
+
+.team-editor-error {
+  margin: 0;
+}
+
+.team-save-button {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .teams-hero,
+  .teams-admin-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .team-create-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .teams-shell {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(18px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .teams-topbar {
+    top: max(8px, env(safe-area-inset-top));
+    border-radius: 16px;
+    padding: 8px 9px;
+  }
+
+  .teams-nav .nav-link {
+    display: none;
+  }
+
+  .teams-refresh-button {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .teams-dashboard,
+  .teams-admin-layout {
+    margin-top: 20px;
+  }
+
+  .teams-hero h1,
+  .teams-admin-hero h1 {
+    font-size: 2.8rem;
+  }
+
+  .team-score-grid,
+  .team-editor-grid,
+  .team-create-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-score-card,
+  .team-create-card,
+  .team-editor-card {
+    border-radius: 20px;
+    padding: 15px;
+  }
+
+  .team-create-button {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .team-editor-player {
+    grid-template-columns: 28px minmax(0, 1fr) 72px;
+  }
+
+  .point-stepper {
+    grid-column: 2 / -1;
+  }
+
+  .point-stepper button {
+    flex: 1;
   }
 }
 
