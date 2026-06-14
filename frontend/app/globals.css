@@ -1261,16 +1261,6 @@ canvas {
     font-size: 11px;
   }
 
-  .teams-entry-link {
-    display: inline-flex;
-    grid-column: 1;
-    grid-row: 3;
-    min-height: 30px;
-    justify-self: start;
-    padding: 6px 9px;
-    font-size: 11px;
-  }
-
   .connection-pill {
     grid-column: 2;
     grid-row: 1;

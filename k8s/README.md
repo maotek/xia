@@ -85,6 +85,16 @@ The browser sends the system prompt and conversation directly to Ollama.
 There is no application backend, authentication, or rate limiting in this
 path, so anyone who can access the site can use the configured models.
 
+## Team service
+
+The `/winners` and `/teams-admin` pages use the Java service named
+`xia-services` on port `8080` in the `kahoot` namespace. The main Ingress
+routes `/api/teams` to that service.
+
+The participant page is read-only, but the API itself also exposes create,
+update, and delete operations. Protect the Java API with authentication if
+team administration must not be publicly accessible.
+
 ## Troubleshooting
 
 If the certificate is not ready, inspect the Let's Encrypt HTTP-01 validation:

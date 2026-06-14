@@ -124,9 +124,11 @@ function TeamsHeader({
         </span>
       </Link>
       <nav className="teams-nav">
-        <Link className="nav-link" href={admin ? "/teams" : "/"}>
-          {admin ? "Scorebord" : "Quiz"}
-        </Link>
+        {admin ? null : (
+          <Link className="nav-link" href="/">
+            Quiz
+          </Link>
+        )}
         <button className="teams-refresh-button" onClick={onRefresh} type="button">
           Vernieuwen
         </button>

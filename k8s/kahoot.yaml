@@ -175,6 +175,13 @@ spec:
     - host: xiaxia23bday.maotek.nl
       http:
         paths:
+          - path: /api/teams
+            pathType: Prefix
+            backend:
+              service:
+                name: xia-services
+                port:
+                  number: 8080
           - path: /ws
             pathType: Prefix
             backend:
